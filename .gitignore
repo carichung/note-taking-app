@@ -1,0 +1,20 @@
+# Ignore Terraform local state and providers
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.exe
+cloud-sql-proxy.exe
+cloudsql-key.json
+
+# Python virtual environments
+venv/
+__pycache__/
+
+# Node modules and build files
+node_modules/
+dist/
+build/
+
+# OS files
+.DS_Store
+
