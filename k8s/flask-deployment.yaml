@@ -1,0 +1,90 @@
+#Deployment = runs 2 replicas of Flask backend
+#use prebuild docker test image: tiangolo/uwsgi-nginx-flask:python3.8 to verify routing
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-backend
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-backend
+
+  template:
+    metadata:
+      labels:
+        app: flask-backend
+
+
+    spec:
+      containers:
+      - name: flask
+        image: carichungs/flask-backend:latest  
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000 #was 80
+
+        # add this for hpa test
+        resources:
+            requests:
+              cpu: "100m"
+            limits:
+              cpu: "500m"
+
+        #env:                   # this part create error
+        #- name: MODULE_NAME
+          #value: "main"
+
+#--------------------------------------------------------
+# k8s/flask-deployment.yaml (inside containers:)
+
+        env:
+
+
+        - name: DB_HOST
+          value: "127.0.0.1"  # must be localhost, never use public ip
+        - name: DB_PORT
+          value: "5432"
+
+
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-secrets
+              key: db_name
+
+
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-secrets
+              key: db_user
+
+
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-secrets
+              key: db_password
+
+
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.33.14
+        command: ["/cloud_sql_proxy",
+                  "-dir=/cloudsql",
+                  "-instances=notetakingapp-001:asia-east2:noteapp-db=tcp:5432",
+                  "-ip_address_types=PRIVATE",
+                  "-credential_file=/secrets/cloudsql/cloudsql-key.json"]
+        volumeMounts:
+        - name: cloudsql-instance-credentials
+          mountPath: /secrets/cloudsql
+          readOnly: true
+
+      volumes:
+      - name: cloudsql-instance-credentials
+        secret:
+          secretName: cloudsql-instance-credentials
+
+       

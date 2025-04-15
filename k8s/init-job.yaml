@@ -1,0 +1,51 @@
+# the purpose of this file is to test if the real table is working or not in "init.sql"
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: init-db
+        image: postgres:15
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "$DB_PASSWORD" > /tmp/pwd && \
+            PGPASSWORD=$(cat /tmp/pwd) psql \
+              -h "$DB_HOST" \
+              -U "$DB_USER" \
+              -d "$DB_NAME" \
+              -f /sql/init.sql
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-secrets
+              key: db_host
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-secrets
+              key: db_name
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-secrets
+              key: db_user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-secrets
+              key: db_password
+        volumeMounts:
+        - name: sql-script
+          mountPath: /sql
+      restartPolicy: Never
+      volumes:
+      - name: sql-script
+        configMap:
+          name: init-sql
+  backoffLimit: 1

@@ -1,0 +1,39 @@
+#Ingress = connects public GCP Load Balancer → your internal Service
+
+#caric@Cari MINGW64 ~/note-taking-app (main)
+#$ kubectl get ingress
+#NAME            CLASS    HOSTS   ADDRESS         PORTS   AGE
+#flask-ingress   <none>   *       34.54.172.114   80      5m33s
+
+#$ gcloud compute addresses describe noteapp-ip --global
+#address: 107.178.243.69
+#addressType: EXTERNAL
+#creationTimestamp: '2025-04-05T20:40:46.565-07:00'
+
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flask-ingress
+  annotations:
+    networking.gke.io/managed-certificates: "noteapp-cert"
+    kubernetes.io/ingress.global-static-ip-name: noteapp-ip
+    kubernetes.io/ingress.allow-http: "true"  # optional, for HTTP fallback
+    kubernetes.io/ingress.allow-https: "true" # optional, default true
+    backend-protocol: "HTTP"
+spec:
+  ingressClassName: gce
+  rules:
+  - host: notes.carichung.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: flask-service
+            port:
+              number: 80
+
+
+
