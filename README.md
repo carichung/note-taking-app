@@ -45,3 +45,12 @@ This project simulates a real-world production environment with multi-tier archi
    ```bash
    terraform init
    terraform apply
+
+📚 Future Improvements
+Add user authentication (JWT/Firebase)
+
+Enable autoscaling for backend pods
+
+Implement end-to-end (E2E) testing pipeline
+
+Add multi-user support for private notes
